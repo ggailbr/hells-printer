@@ -9,3 +9,6 @@ and integrating images from Hell's Cube to MPCFill.
 3. Reformat images (split double sided, [upscale](https://github.com/nagadomi/waifu2x) or [upscale](https://github.com/upscayl/upscayl-ncnn) if needed for DPI reqs ...)
 4. Use [AutoBleed](https://github.com/Solidsilver/mpc-bleeder) to add the bleed needed for printing.
 5. Create [MPCfill XML](https://github.com/chilli-axe/mpc-autofill/wiki/XML-Schema-Specification#overview) to make ordering easier
+
+## Current Format for Downloading Images run:
+python .\xml_download_and_label.py '.\Hellscube 1.xml' [Path you want to save to]
