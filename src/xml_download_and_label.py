@@ -1,32 +1,48 @@
+# Build-in Libs
 import xml.etree.ElementTree as ET
 import argparse
 from pathlib import Path
 import typing
-import tqdm
+from io import BytesIO
+import traceback
+import logging
+
+# Installed Libs
 import requests
 from PIL import Image
-from io import BytesIO
 
+# Custom Files
 from card_format import Card, DraftableCard, TokenCard
 
+LOGGER = logging.Logger(__name__)
 
 def download_image(card: Card, save_folder: Path):
     """Downloads an image from a URL and saves it locally with the card name."""
     save_folder.mkdir(exist_ok=True)
+    image_path = str(save_folder/''.join([a for a in card.name.replace(' ','_').replace("//", "_OR_") if a.isalnum() or a == "_" ]))+".png"
+    if Path(image_path).exists():
+        LOGGER.debug(f"Image already downloaded {image_path}")
+        return
     response = requests.get(card.image,  stream=True)
     if response.status_code == 200:
-        image_path = save_folder / f"{card.name}.jpg"
-        image_bytes = BytesIO()
-        for chunk in response.iter_content(1024):
-            image_bytes.write(chunk)
-        image_bytes.seek(0)
-        final_image = Image.open(image_bytes)
-        exif = final_image.getexif()
-        exif[0x9286] = str(card)
-        final_image.save(str(save_folder/''.join([a for a in card.name.replace(' ','_').replace("//", "_OR_") if a.isalnum() or a == "_" ]))+".png",exif=exif)
-        print(f"Downloaded: {save_folder/card.name.replace(' ','_')}.png")
+        try:
+            image_bytes = BytesIO()
+            for chunk in response.iter_content(1024):
+                image_bytes.write(chunk)
+            image_bytes.seek(0)
+            final_image = Image.open(image_bytes)
+            exif = final_image.getexif()
+            exif[0x9286] = str(card)
+            final_image.save(image_path,format="",exif=exif)
+            LOGGER.debug(f"Downloaded: {image_path}")
+        except OSError as e:
+            try:
+                LOGGER.error(traceback.format_exc(e))
+            except TypeError:
+                pass
+            LOGGER.error(f"Failed to download {card.name} from {card.image}")
     else:
-        print(f"Failed to download {card.name} from {card.image}")
+        LOGGER.error(f"Failed to download {card.name} from {card.image}")
 
 
 def parse_xml_into_cards(xml_path: typing.Union[Path, str], save_folder: Path) -> tuple[list[DraftableCard], list[Card]]:
@@ -77,6 +93,8 @@ def parse_xml_into_cards(xml_path: typing.Union[Path, str], save_folder: Path) -
 
 
 if __name__ == "__main__":
+    LOGGER.setLevel(logging.INFO)
+    
     parser = argparse.ArgumentParser()
     parser.add_argument("xml_file", type=Path, help="Path to the Cockatrice XML file")
     parser.add_argument("--save_folder", type=Path, help="Folder to save card images", default=Path(__file__).parent.parent/"downloads")

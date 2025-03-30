@@ -12,3 +12,11 @@ and integrating images from Hell's Cube to MPCFill.
 
 ## Current Format for Downloading Images run:
 python .\xml_download_and_label.py '.\Hellscube 1.xml' [Path you want to save to]
+
+## Naughty List
+Cards that have particular exceptions and required manual intervention.
+
+- Sensory Overload and Sun Whitan: These cards seemed to be truncated when they were uploaded to the google content 
+storage. As a result, part of the bottom of them gets cutoff and not properly loaded. This manafests as grey space
+if truncated images are allowed. To get around this, I found the images in the discord and replaced the download
+links in the XML.
