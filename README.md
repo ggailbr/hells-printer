@@ -3,6 +3,8 @@ With the searching I did, I was unable to find a convenient way to download and
 print Hell's Cube. This is my attempt at automatically downloading, formatting,
 and integrating images from Hell's Cube to MPCFill.
 
+Aiming for an 80% solution
+
 ## Planned Process
 1. The cards are all linked in the XML downloadable from [Hellfall](https://skeleton.club/hellfall/hellscubes). Using Cockatrice ([Cockatrice](https://github.com/Cockatrice/Cockatrice/wiki/Custom-Cards-&-Sets))
 2. Download and tag images based on if they are single or double sided (I am unsure about three sided yet or the foldable one) (In particular:Gristly Bear // Colossal Dradfulmaw needs to meld and is 2 different cards, but one image)
@@ -30,8 +32,11 @@ storage. As a result, part of the bottom of them gets cutoff and not properly lo
 if truncated images are allowed. To get around this, I found the images in the discord and replaced the download
 links in the XML through the `patcher.py`.
 
+- `Almighty_Brushwagghc` has atypical edges.
+- Any white edges such as `Borrowing_100000_Bears` doesn't play nice with removing corner. Along with odd colors such as `Acquisition_of_Kozilek`
+
 ## Upscale Comparison
 Based on a small search (by smallest original size), the worst cards to upscale were `Goblin Game`, `Throne_of_u_fredfloof`, and `Whale Visions`.
 
 I performed a quick comparison of the various models on `Goblin Game`, but 
-did 
+did not go through all cards ofc.
