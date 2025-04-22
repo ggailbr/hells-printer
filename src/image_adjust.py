@@ -1,5 +1,6 @@
 # usage: ./image_adjust.py -s <source_path> -d <dest_path>
 # -<source_path> must have "draftable" and "tokens" folders with card images
+# both inputs are optional, default src and dest are provided below
 
 # BASICS:
 # - This program takes downloaded images and splits and/or rotates them to be portrait MTG cards
@@ -70,8 +71,6 @@ def adjust(src: Path, dst: Path, type: str):
      warning_list = []
      split_list = []
      maybe_list = []
-     if dst.exists():
-          shutil.rmtree(dst) # extremely inefficient, removes entire destination if it already exists
      dst.mkdir(parents=True, exist_ok=True)
 
      for card in src.iterdir():
@@ -121,6 +120,8 @@ def adjust(src: Path, dst: Path, type: str):
                if not check_ratio(current):
                     print('Ratio incorrect on: '+cur_meta['name'])
                     warning_list.append(cur_meta['name'])
+               if save_path.exists() and save_path.is_file():
+                    save_path.unlink()
                current.save(save_path)
           else: #there are two halves to deal with
                l_save_path = save_path.with_suffix('').resolve()
@@ -129,7 +130,11 @@ def adjust(src: Path, dst: Path, type: str):
                r_save_path = save_path.with_suffix('').resolve()
                r_save_path = save_path.with_name(r_save_path.name + '_2.png')
 
+               if l_save_path.exists() and l_save_path.is_file():
+                    l_save_path.unlink()
                split_halves['left'].save(l_save_path, format='png')
+               if r_save_path.exists() and r_save_path.is_file():
+                    r_save_path.unlink()
                split_halves['right'].save(r_save_path, format='png')
 
      print('THESE CARDS HAD SUS RATIOS AND SHOULD BE REVIEWED:')

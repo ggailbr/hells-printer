@@ -14,6 +14,9 @@
 #   inefficient but simpler. THE SOURCE AND DESTINATION SHOULD ONLY CONTAIN A <draftable> AND 
 #   <tokens> DIRECTORY WITH THE APPROPRIATE IMAGES. ANY OTHER FILES RISK BEING DELETED
 #
+# - Code only upscales cards that are too small. Cards that are big enough, but not the correct
+#   ratio, are not fixed. However, this situation should be rare.
+#
 # - Images are currently squashed and stretched to fit the ratio of a portrait MTG card if they 
 #   are not already the correct ratio. This combined with simple upscaler means some cards become
 #   much lower quality after upscaling
@@ -42,7 +45,7 @@ def upscale(src: Path, dest: Path, type: str):
         image = Image.open(card)
         w, h = image.size
         if w*h < 744*1039:
-            print('Upscaling card: ' + str(card.name))
+            print('Resizing card: ' + str(card.name))
             upscaled = image.resize(RATIO_PX) # all upscaling happens right here
         #else:
         #    print('Skipping card: ' + str(card.name))
@@ -50,6 +53,8 @@ def upscale(src: Path, dest: Path, type: str):
 
         card_name = str(card.name)
         save_path = dest/card_name
+        if save_path.exists() and save_path.is_file():
+            save_path.unlink() # remove file if it already exists (replacement)
         upscaled.save(save_path)
     return
 
@@ -74,9 +79,9 @@ def main():
         print('Source directory needs to have \"draftable\" and \"tokens\" folders')
         return
     
-    if dest_path.exists():
-        shutil.rmtree(dest_path)
-    dest_path.mkdir(parents=True)
+    #if dest_path.exists():
+    #    shutil.rmtree(dest_path)
+    dest_path.mkdir(parents=True, exist_ok=True)
     (dest_path/'draftable').mkdir(parents=True, exist_ok=True)
     (dest_path/'tokens').mkdir(parents=True, exist_ok=True)
 
