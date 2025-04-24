@@ -29,7 +29,7 @@ def trim_edge(image: ImageFile, depth = 10, ratio = 0.5):
     modified_edge = [False,False,False,False]
 
     # First trim any alpha channel off the side
-    if image_array.shape[2] >3:
+    if image_array.shape[2] > 3:
         # Test case: u_cirion02s_Art_Folder.png
         
         # Left side
@@ -132,9 +132,11 @@ def check_corner(image_values, image_array, top=True, right=True):
     if horizontal_transition_point < corner_range_w[1] and horizontal_transition_point > corner_range_w[0] and np.max(horizontal_differences) > 30 and \
         vertical_transition_point < corner_range_h[1] and vertical_transition_point > corner_range_h[0] and np.max(vertical_differences) > 30 and chunk[0,0,2]  > 100:
         further_cropped = chunk[:vertical_transition_point + margin, :horizontal_transition_point + margin]
+        sampled_hsv = further_cropped[further_cropped.shape[0]//2, further_cropped.shape[1]//2]
+
         for x in range(vertical_transition_point + margin):
             for y in range(horizontal_transition_point + margin):
-                if further_cropped[x,y,2]  > 100 and further_cropped[x,y,1] < 50:
+                if further_cropped[x,y,2]  > max(sampled_hsv[2] + 30,0) and further_cropped[x,y,1] < 50:
                     target_x = x
                     target_y = y
                     if x_flipped:
