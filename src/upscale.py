@@ -43,6 +43,7 @@ def upscale(src: Path, dest: Path, type: str):
 
     for card in src.iterdir():
         image = Image.open(card)
+        upscaled = image
         w, h = image.size
         if w*h < 744*1039:
             print('Resizing card: ' + str(card.name))
