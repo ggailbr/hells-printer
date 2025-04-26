@@ -27,6 +27,7 @@
 import shutil
 import argparse
 from PIL import Image
+import logging
 from pathlib import Path
 
 DPI = 300 # desired DPI
@@ -37,21 +38,31 @@ RATIO_PX = (744,1039) # needed resolution for 300 DPI
 source_path = Path('../trimmed').resolve()
 dest_path = Path('../upscaled').resolve()
 
+LOGGER = logging.Logger(__name__)
+
+def upscale_img(img: Image, pil_upscale: bool = True):
+    upscaled = img
+    w, h = img.size
+    if w*h < 744*1039:
+        LOGGER.info('Resizing card: ' + str(img.filename))
+        if pil_upscale:
+            upscaled = img.resize(RATIO_PX) # all upscaling happens right here
+            upscaled.filename = img.filename
+        else:
+            raise NotImplementedError("Need to add AI upscaling")
+    else:
+       LOGGER.info('Skipping card: ' + str(img.filename))
+       upscaled = img
+    return upscaled
+
+
 def upscale(src: Path, dest: Path, type: str):
     src = src/type
     dest = dest/type
 
     for card in src.iterdir():
         image = Image.open(card)
-        upscaled = image
-        w, h = image.size
-        if w*h < 744*1039:
-            print('Resizing card: ' + str(card.name))
-            upscaled = image.resize(RATIO_PX) # all upscaling happens right here
-        #else:
-        #    print('Skipping card: ' + str(card.name))
-        #    upscaled = image
-
+        upscaled = upscale_img(image)
         card_name = str(card.name)
         save_path = dest/card_name
         if save_path.exists() and save_path.is_file():

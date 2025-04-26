@@ -16,7 +16,7 @@ from card_format import Card, DraftableCard, TokenCard
 
 LOGGER = logging.Logger(__name__)
 
-def download_image(card: Card, save_folder: Path):
+def download_image(card: Card, save_folder: Path, save: bool = True):
     """Downloads an image from a URL and saves it locally with the card name."""
     save_folder.mkdir(exist_ok=True)
     image_path = str(save_folder/''.join([a for a in card.name.replace(' ','_').replace("//", "_OR_") if a.isalnum() or a == "_" ]))+".png"
@@ -31,10 +31,15 @@ def download_image(card: Card, save_folder: Path):
                 image_bytes.write(chunk)
             image_bytes.seek(0)
             final_image = Image.open(image_bytes)
+            final_image = final_image.convert("RGBA")
             exif = final_image.getexif()
             exif[0x9286] = str(card)
-            final_image.save(image_path,format="",exif=exif)
-            LOGGER.debug(f"Downloaded: {image_path}")
+            if save:
+                final_image.save(image_path,format="",exif=exif)
+                LOGGER.debug(f"Downloaded: {image_path}")
+            else:
+                final_image.filename = Path(image_path).name
+                return final_image
         except OSError as e:
             try:
                 LOGGER.error(traceback.format_exc(e))

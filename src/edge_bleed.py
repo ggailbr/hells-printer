@@ -33,6 +33,7 @@ def expand_for_bleed(image: ImageFile) -> Image:
     right_bleed = np.repeat(image_array[:,-1,...],repeats=bleed_pixels_h, axis=0).reshape((height,bleed_pixels_h,3))
     image_array = np.concatenate((left_bleed, image_array, right_bleed),axis=1)
     img_w_bleed = Image.fromarray(np.uint8(image_array))
+    img_w_bleed.filename = image.filename
     return img_w_bleed
 
 def run_expand_for_bleed(image_file: Path, args):

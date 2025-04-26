@@ -35,6 +35,9 @@ from pathlib import Path
 from PIL import Image
 import shutil
 import touch_up
+import logging
+
+LOGGER = logging.Logger(__name__)
 
 #default directories
 source_path = Path('../downloads').resolve()
@@ -50,6 +53,71 @@ def check_ratio(image: Image) -> bool:
          return True
     else:
          return False
+
+def adjust_cards(card: Image):
+     split_halves = {}
+     save_path = card
+     warning = split = maybe = False
+     portrait = True
+     imgs = []
+     w, h = card.size
+     cur_meta = ast.literal_eval((dict(card.getexif()))[37510])
+     #print(cur_meta)
+
+     # card orientation
+     if(w > h): portrait = False
+
+     # if card is horizontal and <split> the split into two portrait halves
+     # otherwise, don't split
+     if(cur_meta['layout'] == 'split' and (not portrait)):
+          if not check_ratio(card.rotate(90, expand=1)):
+               split = True
+
+               midpoint = w // 2
+               left = card.crop((0, 0, midpoint, h))
+               right = card.crop((midpoint, 0, w, h))
+
+               split_halves['left'] = left
+               split_halves['right'] = right
+               LOGGER.info('Splitting card: '+card.filename)
+          else:
+               maybe = True
+               card = card.rotate(90, expand=1)
+               LOGGER.info('Skipping over a <split> card: '+card.filename)
+               portrait = True
+     else:
+          if not portrait:
+               card = card.rotate(90, expand=1)
+               LOGGER.info('Rotated card: '+card.filename)
+               portrait = True
+
+     if not split_halves: # split didn't occur
+          if not check_ratio(card):
+               LOGGER.info('Ratio incorrect on: '+cur_meta['name'])
+               warning = True
+          # if save_path.exists() and save_path.is_file():
+          #      save_path.unlink()
+          imgs = [card]
+          # card.save(save_path)
+
+     else: #there are two halves to deal with
+          l_save_path = save_path.with_suffix('').resolve()
+          l_save_path = save_path.with_name(l_save_path.name + '_1.png')
+
+          r_save_path = save_path.with_suffix('').resolve()
+          r_save_path = save_path.with_name(r_save_path.name + '_2.png')
+
+          # if l_save_path.exists() and l_save_path.is_file():
+          #      l_save_path.unlink()
+          # split_halves['left'].save(l_save_path, format='png')
+          split_halves['left'].filename = l_save_path.name
+          imgs.append(split_halves['left'])
+          # if r_save_path.exists() and r_save_path.is_file():
+          #      r_save_path.unlink()
+          # split_halves['right'].save(r_save_path, format='png')
+          split_halves['right'].filename = r_save_path.name
+          imgs.append(split_halves['right'])
+     return imgs, (warning, split, maybe)
 
 def adjust(src: Path, dst: Path, type: str):
      src = src/type
@@ -74,68 +142,25 @@ def adjust(src: Path, dst: Path, type: str):
      dst.mkdir(parents=True, exist_ok=True)
 
      for card in src.iterdir():
-          split_halves = {}
-          save_path = card
-          portrait = True
-
           # open card image and extract EXIF
           try:
                current = Image.open(card)
           except:
-               print('error with '+str(card))
-               return
-          w, h = current.size
-          cur_meta = ast.literal_eval((dict(current.getexif()))[37510])
-          #print(cur_meta)
-
-          # card orientation
-          if(w > h): portrait = False
-
-          # if card is horizontal and <split> the split into two portrait halves
-          # otherwise, don't split
-          if(cur_meta['layout'] == 'split' and (not portrait)):
-               if not check_ratio(current.rotate(90, expand=1)):
-                    split_list.append(cur_meta['name'])
-
-                    midpoint = w // 2
-                    left = current.crop((0, 0, midpoint, h))
-                    right = current.crop((midpoint, 0, w, h))
-
-                    split_halves['left'] = left
-                    split_halves['right'] = right
-                    print('Splitting card: '+card.name)
-               else:
-                    maybe_list.append(cur_meta['name'])
-                    current = current.rotate(90, expand=1)
-                    print('Skipping over a <split> card: '+card.name)
-                    portrait = True
-          else:
-               if not portrait:
-                    current = current.rotate(90, expand=1)
-                    print('Rotated card: '+card.name)
-                    portrait = True
-
-          save_path = dst/card.name
-          if not split_halves: # split didn't occur
-               if not check_ratio(current):
-                    print('Ratio incorrect on: '+cur_meta['name'])
-                    warning_list.append(cur_meta['name'])
+               LOGGER.error('error with '+str(card))
+               continue
+          imgs, lists = adjust_cards(current)
+          if lists[0]:
+               warning_list.append(card.name)
+          if lists[1]:
+               split_list.append(card.name)
+          if lists[2]:
+               maybe_list.append(card.name)
+          for img in imgs:
+               save_path = dst/img.filename
                if save_path.exists() and save_path.is_file():
                     save_path.unlink()
-               current.save(save_path)
-          else: #there are two halves to deal with
-               l_save_path = save_path.with_suffix('').resolve()
-               l_save_path = save_path.with_name(l_save_path.name + '_1.png')
+               img.save(save_path, format='png')
 
-               r_save_path = save_path.with_suffix('').resolve()
-               r_save_path = save_path.with_name(r_save_path.name + '_2.png')
-
-               if l_save_path.exists() and l_save_path.is_file():
-                    l_save_path.unlink()
-               split_halves['left'].save(l_save_path, format='png')
-               if r_save_path.exists() and r_save_path.is_file():
-                    r_save_path.unlink()
-               split_halves['right'].save(r_save_path, format='png')
 
      print('THESE CARDS HAD SUS RATIOS AND SHOULD BE REVIEWED:')
      print(warning_list)

@@ -166,7 +166,29 @@ def check_corners(image):
     return_image.filename = image.filename
     return return_image, any(modified_corners)
 
-def process_image(image_path, args):
+def process_image(file_image):
+    starting_filename = file_image.filename
+    try:
+        file_image, modified = trim_edge(file_image)
+    except Exception as e:
+        modified = False
+        print(traceback.format_exception(e))
+        LOGGER.error(f"Failed to trim {starting_filename}")
+    try:
+        file_image, corners = check_corners(file_image)
+    except Exception as e:
+        corners = False
+        print(traceback.format_exception(e))
+        LOGGER.error(f"Failed to corner {starting_filename}")
+    # from edge_bleed import expand_for_bleed
+    # file_image = expand_for_bleed(file_image)
+    if not modified and not corners:
+        LOGGER.debug(str(starting_filename)+" was not modified")
+
+    file_image.filename = starting_filename
+    return file_image
+
+def process_image_file(image_path, args):
     if image_path.is_file():
         file_image = Image.open(image_path)
         # Thanks Halvesies for being 8 bit color specification...
@@ -206,7 +228,7 @@ if __name__ == "__main__":
 
     if args.image_dir.is_dir():
         pool = multiprocessing.Pool(args.max_processes)
-        multiprocess_image = functools.partial(process_image, args=args)
+        multiprocess_image = functools.partial(process_image_file, args=args)
         pool.map(multiprocess_image, args.image_dir.iterdir())
         pool.close()
     else:
