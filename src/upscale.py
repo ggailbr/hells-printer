@@ -29,6 +29,10 @@ import argparse
 from PIL import Image
 import logging
 from pathlib import Path
+import subprocess
+import tempfile
+import os
+import math
 
 DPI = 300 # desired DPI
 RATIO = 63/88 # portrait card size (~0.71591)
@@ -49,7 +53,19 @@ def upscale_img(img: Image, pil_upscale: bool = True):
             upscaled = img.resize(RATIO_PX) # all upscaling happens right here
             upscaled.filename = img.filename
         else:
-            raise NotImplementedError("Need to add AI upscaling")
+            # This is quite broken so I can not recommend it
+            ratio = min(4, math.ceil((744*1039)/(w*h)))
+            img_filename = img.filename
+            with tempfile.NamedTemporaryFile(mode="wb") as png:
+                img.save(png.name+".png")
+                png.flush()
+                temp_img_name = png.name+".png"
+                upscaly_path = Path(os.getcwd()).parent/"custom-models"/"upscayl.exe"
+                subprocess_cmd = f"{upscaly_path.absolute()} -i {temp_img_name} -o {temp_img_name.replace('.png', '_new.png')} -c 0 -n 4xLSDIRplusC -r {RATIO_PX[0]}x{RATIO_PX[1]} -z {ratio}"
+                LOGGER.info("Running: "+subprocess_cmd)
+                subprocess.run(subprocess_cmd)
+                upscaled = Image.open(temp_img_name.replace('.png', '_new.png'))
+                upscaled.filename = img_filename
     else:
        LOGGER.info('Skipping card: ' + str(img.filename))
        upscaled = img

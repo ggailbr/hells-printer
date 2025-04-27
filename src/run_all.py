@@ -22,17 +22,18 @@ LOGGER = logging.Logger(__name__)
 
 
 def run_full_processesing(card: Image, save_folder):
-    LOGGER.warning(card.filename)
     adjusted_imgs, _ = adjust_cards(card)
     for img in adjusted_imgs:
-        LOGGER.warning(img.filename)
         touched_up_img = process_image(img)
-        LOGGER.warning(touched_up_img.filename)
-        upscaled_img = upscale_img(touched_up_img)
-        LOGGER.warning(upscaled_img.filename)
+        # If you change True to False, it will try to use AI upscaling
+        #   This is considerably slower, but does help with really low
+        #   resolution cards. It is also decently broken, so I would 
+        #   recommend doing without first then rerunning for cards
+        #   that look bad
+        upscaled_img = upscale_img(touched_up_img, True)
         bleed_img = expand_for_bleed(upscaled_img)
-        LOGGER.warning(bleed_img.filename)
         bleed_img.save(save_folder/bleed_img.filename)
+    return
 
 
 def process_draftable(draftable_card, save_folder:Path):
@@ -57,6 +58,8 @@ if __name__ == "__main__":
 
     draftable_cards, tokens = parse_xml_into_cards(args.xml_file, args.save_folder)
     
+    LOGGER.info("Starting downloading and processing of cards")
+
     if args.max_processes > 1:
         pool = multiprocessing.Pool(args.max_processes)
         multiprocess_process = functools.partial(process_draftable, save_folder=args.save_folder/"draftable")

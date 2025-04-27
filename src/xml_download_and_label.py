@@ -20,7 +20,7 @@ def download_image(card: Card, save_folder: Path, save: bool = True):
     """Downloads an image from a URL and saves it locally with the card name."""
     save_folder.mkdir(exist_ok=True)
     image_path = str(save_folder/''.join([a for a in card.name.replace(' ','_').replace("//", "_OR_") if a.isalnum() or a == "_" ]))+".png"
-    if Path(image_path).exists():
+    if Path(image_path).exists() or Path(image_path.replace(".png", "_1.png")).exists():
         LOGGER.debug(f"Image already downloaded {image_path}")
         return
     response = requests.get(card.image,  stream=True)
