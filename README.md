@@ -12,13 +12,16 @@ Aiming for an 80% solution
 4. Add Bleed
 5. Create [MPCfill XML](https://github.com/chilli-axe/mpc-autofill/wiki/XML-Schema-Specification#overview) to make ordering easier
 
-## Current Format for Downloading Images run:
-- `python .\patcher.py \<XML Path\>`
+## Run Methods:
 
+### Option 1
+Running each utility so you have can see/modify images at each step
 - `python .\xml_download_and_label.py \<XML Path\> [Path you want to save to]`
 
+
+
 ## Cons
-In order to make images the size needed for MPC, we utilized AI upscaling. We did not bother as much with the denoising or 
+In order to make images the size needed for MPC, we have the option of AI upscaling or general resizing. We did not bother as much with the denoising or 
 preserving the text so some fonts may look funky. That being said, I generally liked the output of upscayl the most. To use it
 I downloaded the most recent release from [here](https://github.com/upscayl/upscayl-ncnn/releases), then I downloaded the models
 for it from [their github](https://github.com/upscayl/custom-models). You can then either copy the files from the release to 

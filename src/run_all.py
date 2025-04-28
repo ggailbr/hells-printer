@@ -36,6 +36,21 @@ def run_full_processesing(card: Image, save_folder):
     return
 
 
+def run_full_processesing(card: Image, save_folder):
+    adjusted_imgs, _ = adjust_cards(card)
+    for img in adjusted_imgs:
+        touched_up_img = process_image(img)
+        # If you change True to False, it will try to use AI upscaling
+        #   This is considerably slower, but does help with really low
+        #   resolution cards. It is also decently broken, so I would 
+        #   recommend doing without first then rerunning for cards
+        #   that look bad
+        upscaled_img = upscale_img(touched_up_img, True)
+        bleed_img = expand_for_bleed(upscaled_img)
+        bleed_img.save(save_folder/bleed_img.filename)
+    return
+
+
 def process_draftable(draftable_card, save_folder:Path):
     downloaded_img = download_image(draftable_card, save_folder, save=False)
     if downloaded_img is None:
@@ -70,4 +85,10 @@ if __name__ == "__main__":
             process_draftable(draftable_card, args.save_folder/"draftable")
 
     for token in tokens:
-        downloaded_img = download_image(token, args.save_folder/"tokens")
+        downloaded_img = download_image(token, args.save_folder/"tokens", save=False)
+        if downloaded_img is None:
+            continue
+        touched_up_img = process_image(downloaded_img)
+        upscaled_token = upscale_img(touched_up_img, True)
+        bleed_img = expand_for_bleed(upscaled_token)
+        bleed_img.save(args.save_folder/"tokens"/bleed_img.filename)
