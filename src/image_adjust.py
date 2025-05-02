@@ -71,31 +71,39 @@ def adjust_cards(card: Image):
      # otherwise, don't split
      if(cur_meta['layout'] == 'split' and (not portrait)):
           if not check_ratio(card.rotate(90, expand=1)):
-               split = True
-               if cur_meta['name'] == "Gristly Bear __ Colossal Dradfulmaw":
-                    thirds = w // 3
-                    meld_front = card.crop((0, 0, thirds, h))
-                    meld_back = card.crop((thirds, h//2, 2*thirds, h)).rotate(90, expand=1)
-                    meld2_front = card.crop((2*thirds, 0, w, h))
-                    meld2_back = card.crop((thirds, 0, 2*thirds, h//2)).rotate(90, expand=1)
-                    meld_front.filename = card.filename.split("____")[0]+"_1.png"
-                    imgs.append(meld_front)
-                    meld_back.filename = card.filename.split("____")[0]+"_2.png"
-                    imgs.append(meld_back)
-                    meld2_front.filename = card.filename.split("____")[1].replace(".png", "_1.png")
-                    imgs.append(meld2_front)
-                    meld2_back.filename = card.filename.split("____")[1].replace(".png", "_2.png")
-                    imgs.append(meld2_back)
-                    return imgs, (warning, split, maybe)
+               if cur_meta['name'] == "Some __ Body":
+                    # Another hard coded fix, need some extensible way to do this
+                    maybe = True
+                    card = card.rotate(90, expand=1)
+                    card.filename = starting_file_name
+                    LOGGER.info('Skipping over a <split> card: '+card.filename)
+                    portrait = True
+               else:
+                    split = True
+                    if cur_meta['name'] == "Gristly Bear __ Colossal Dradfulmaw":
+                         thirds = w // 3
+                         meld_front = card.crop((0, 0, thirds, h))
+                         meld_back = card.crop((thirds, h//2, 2*thirds, h)).rotate(90, expand=1)
+                         meld2_front = card.crop((2*thirds, 0, w, h))
+                         meld2_back = card.crop((thirds, 0, 2*thirds, h//2)).rotate(90, expand=1)
+                         meld_front.filename = card.filename.split("____")[0]+"_1.png"
+                         imgs.append(meld_front)
+                         meld_back.filename = card.filename.split("____")[0]+"_2.png"
+                         imgs.append(meld_back)
+                         meld2_front.filename = card.filename.split("____")[1].replace(".png", "_1.png")
+                         imgs.append(meld2_front)
+                         meld2_back.filename = card.filename.split("____")[1].replace(".png", "_2.png")
+                         imgs.append(meld2_back)
+                         return imgs, (warning, split, maybe)
 
-               midpoint = w // 2
-               left = card.crop((0, 0, midpoint, h))
-               right = card.crop((midpoint, 0, w, h))
+                    midpoint = w // 2
+                    left = card.crop((0, 0, midpoint, h))
+                    right = card.crop((midpoint, 0, w, h))
 
-               split_halves['left'] = left
-               split_halves['right'] = right
+                    split_halves['left'] = left
+                    split_halves['right'] = right
 
-               LOGGER.info('Splitting card: '+card.filename)
+                    LOGGER.info('Splitting card: '+card.filename)
           else:
                maybe = True
                card = card.rotate(90, expand=1)
