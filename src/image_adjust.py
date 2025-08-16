@@ -43,9 +43,48 @@ LOGGER = logging.Logger(__name__)
 source_path = Path('../downloads').resolve()
 dest_path = Path('../adjusted').resolve()
 
+SAVE_FOLDER = None
+
 # constants
 RATIO = 744/1039 # portrait card size (~0.71591)
 RATIO_ERROR = 0.005 # margin of error for ratio checking
+
+# Yall make wack cards so I needed to hard code some exceptions
+DONT_SPLIT = [
+     # HC 1
+     "Some __ Body", 
+     # HC 6
+     "Draw the Out __ Be Consistent __ Draw the Out"
+]
+
+SPLIT = [
+     # HC 1
+     "__ce of Will",
+     "When I Was a Lad I Ate __ Dozen Eggs",
+     "\"I Need Your Love\" __ \"I Need Your Time\"",
+     # HC 6
+     "Elden Ring Boss __ Elden Ring Boss, Phase Two",
+     "HC6: MrMirari, Mod of Lies __ Van, Hellscube Impostor",
+     "Iron Ingot __ Iron Pick-Axe",
+     "Loot That Body",
+     "Urza's Desert __ Urza's Dessert",
+     'Smart Fella __ Fart Smella',
+     'The Prismatic Lensite __ The Prismatic Lensaurus',
+     'MR. CRIME 1981 __ Felony Theft',
+     "Wheel of Fortune"
+]
+
+REMOVE_TOKENS = [
+     'Hellscube Rebalancing Team',
+     "Dungeon Jumper",
+     'ur moms house',
+     'B             o                o',
+     'mistaur Beast',
+     'Smith of Sword and Sword',
+     'Overlord of Veto Hell',
+     'Honk Honk',
+     'Termite Infestation'
+]
 
 def check_ratio(image: Image) -> bool:
     w, h = image.size
@@ -53,6 +92,114 @@ def check_ratio(image: Image) -> bool:
          return True
     else:
          return False
+    
+
+def giraffe(card):
+     import run_all
+     imgs = []
+     split = maybe = True
+     warning = False
+     w, h = card.size
+     midpoint = w // 2
+     img = card.crop((0, 594, w, h))
+     img.filename = card.filename.replace(".png","_token.png")
+     right = card.crop((0, 0, w, 594))
+     right.filename = card.filename
+     imgs.append(img)
+     run_all.process_token(right, save_folder=SAVE_FOLDER.parent/"tokens")
+     return imgs, (warning, split, maybe)
+
+
+def split_to_token(card):
+     import run_all
+     imgs = []
+     split = maybe = True
+     warning = False
+     w, h = card.size
+     midpoint = w // 2
+     img = card.crop((0, 0, midpoint, h))
+     img.filename = card.filename
+     imgs.append(img)
+     right = card.crop((midpoint, 0, w, h))
+     right.filename = card.filename.replace(".png","_token.png")
+     run_all.process_token(right, save_folder=SAVE_FOLDER.parent/"tokens")
+     return imgs, (warning, split, maybe)
+
+
+    
+def tomato_town(card):
+     imgs = []
+     split = maybe = True
+     warning = False
+     w, h = card.size
+     front = card.crop((0, 0, 1055, h)).rotate(90, expand=1)
+     back = card.crop((1055, 0, w, h))
+     front.filename = card.filename.replace(".png","")+"_1.png"
+     imgs.append(front)
+     back.filename = card.filename.replace(".png","")+"_2.png"
+     imgs.append(back)
+     return imgs, (warning, split, maybe)
+
+
+def dante(card):
+     imgs = []
+     maybe = True
+     split = warning = False
+     w, h = card.size
+     front = card.crop((0, 0, 796, h))
+     front.filename = card.filename
+     imgs.append(front)
+     return imgs, (warning, split, maybe)
+
+def han_solo(card):
+     imgs = []
+     split = maybe = True
+     warning = False
+     w, h = card.size
+     front = card.crop((0, 0, 593, h))
+     back = card.crop((593, 256, w, 933))
+     front.filename = card.filename.replace(".png","")+"_1.png"
+     imgs.append(front)
+     back.filename = card.filename.replace(".png","")+"_2.png"
+     imgs.append(back)
+     return imgs, (warning, split, maybe)
+     
+
+
+def grisley_adjust(card):
+     imgs = []
+     split = maybe = True
+     warning = False
+     w, h = card.size
+     thirds = w // 3
+     meld_front = card.crop((0, 0, thirds, h))
+     meld_back = card.crop((thirds, h//2, 2*thirds, h)).rotate(90, expand=1)
+     meld2_front = card.crop((2*thirds, 0, w, h))
+     meld2_back = card.crop((thirds, 0, 2*thirds, h//2)).rotate(90, expand=1)
+     meld_front.filename = card.filename.split("____")[0]+"_1.png"
+     imgs.append(meld_front)
+     meld_back.filename = card.filename.split("____")[0]+"_2.png"
+     imgs.append(meld_back)
+     meld2_front.filename = card.filename.split("____")[1].replace(".png", "_1.png")
+     imgs.append(meld2_front)
+     meld2_back.filename = card.filename.split("____")[1].replace(".png", "_2.png")
+     imgs.append(meld2_back)
+     return imgs, (warning, split, maybe)
+
+# I give up
+SPECIAL_CARDS = {
+     "Gristly Bear __ Colossal Dradfulmaw": grisley_adjust,
+     "Han Solo, Slabbed in PSA __ Harrison Ford as Han Solo": han_solo,
+     "The Tomato Town Massacre __ The Chug Jug" : tomato_town,
+     "Dante Alighieri": dante,
+     "Hellscube Old Guard": split_to_token,
+     "Doomguy and Isabelle": split_to_token,
+     "Sisyphus and The Rock GX __ Dwayne \"The Rock\" Johnson": split_to_token,
+     "Un Adventurer": split_to_token,
+     "That One Stock American Cartoon Episode": split_to_token,
+     "Low On Groceries": split_to_token,
+     "Giraffe Legs __ Giraffe Head": giraffe,
+}
 
 def adjust_cards(card: Image):
      split_halves = {}
@@ -69,41 +216,35 @@ def adjust_cards(card: Image):
 
      # if card is horizontal and <split> the split into two portrait halves
      # otherwise, don't split
-     if(cur_meta['layout'] == 'split' and (not portrait)):
-          if not check_ratio(card.rotate(90, expand=1)):
-               if cur_meta['name'] == "Some __ Body":
+     print(cur_meta['name'].encode())
+     print(cur_meta['name'] in [*SPLIT, *REMOVE_TOKENS])
+     if cur_meta['name'] in list(SPECIAL_CARDS.keys()):
+          return SPECIAL_CARDS[cur_meta['name']](card)
+     if (cur_meta['layout'] == 'split' and (not portrait)) or cur_meta['name'] in [*SPLIT, *REMOVE_TOKENS]:
+          if not check_ratio(card.rotate(90, expand=1)) or cur_meta['name'] in [*SPLIT, *REMOVE_TOKENS]:
+               if cur_meta['name'] in DONT_SPLIT:
                     # Another hard coded fix, need some extensible way to do this
                     maybe = True
-                    card = card.rotate(90, expand=1)
+                    if w > h:
+                         card = card.rotate(90, expand=1)
                     card.filename = starting_file_name
                     LOGGER.info('Skipping over a <split> card: '+card.filename)
                     portrait = True
                else:
-                    split = True
-                    if cur_meta['name'] == "Gristly Bear __ Colossal Dradfulmaw":
-                         thirds = w // 3
-                         meld_front = card.crop((0, 0, thirds, h))
-                         meld_back = card.crop((thirds, h//2, 2*thirds, h)).rotate(90, expand=1)
-                         meld2_front = card.crop((2*thirds, 0, w, h))
-                         meld2_back = card.crop((thirds, 0, 2*thirds, h//2)).rotate(90, expand=1)
-                         meld_front.filename = card.filename.split("____")[0]+"_1.png"
-                         imgs.append(meld_front)
-                         meld_back.filename = card.filename.split("____")[0]+"_2.png"
-                         imgs.append(meld_back)
-                         meld2_front.filename = card.filename.split("____")[1].replace(".png", "_1.png")
-                         imgs.append(meld2_front)
-                         meld2_back.filename = card.filename.split("____")[1].replace(".png", "_2.png")
-                         imgs.append(meld2_back)
-                         return imgs, (warning, split, maybe)
+                    if cur_meta['name'] in REMOVE_TOKENS:
+                         midpoint = w // 2
+                         card = card.crop((0, 0, midpoint, h))
+                         card.filename = starting_file_name
+                    else:
+                         split = True
+                         midpoint = w // 2
+                         left = card.crop((0, 0, midpoint, h))
+                         right = card.crop((midpoint, 0, w, h))
 
-                    midpoint = w // 2
-                    left = card.crop((0, 0, midpoint, h))
-                    right = card.crop((midpoint, 0, w, h))
+                         split_halves['left'] = left
+                         split_halves['right'] = right
 
-                    split_halves['left'] = left
-                    split_halves['right'] = right
-
-                    LOGGER.info('Splitting card: '+card.filename)
+                         LOGGER.info('Splitting card: '+card.filename)
           else:
                maybe = True
                card = card.rotate(90, expand=1)

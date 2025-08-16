@@ -87,7 +87,7 @@ def parse_xml_into_cards(xml_path: typing.Union[Path, str], save_folder: Path) -
                 continue
             related_list = []
             for related in related_cards:
-                if related.text in cards["draftable_cards"]:
+                if related.text is not None and related.text.replace("/", "_").upper() in [card.name.upper() for card in cards["draftable_cards"]]:
                     related_list.append(related.text)
             if len(related_list) > 0:
                 cards["tokens"].append(

@@ -3,7 +3,6 @@ import math
 import os
 import numpy as np
 from pathlib import Path
-import matplotlib.pyplot as plt
 import logging
 import multiprocessing
 import argparse
@@ -37,8 +36,9 @@ def expand_for_bleed(image: ImageFile) -> Image:
     return img_w_bleed
 
 def run_expand_for_bleed(image_file: Path, args):
-    img = Image.open(image_file)
-    expand_for_bleed(img).save(args.output_dir/image_file.name)
+    if os.path.isfile(image_file) and (image_file.name.__contains__(".jpg") or image_file.name.__contains__(".png")):
+        img = Image.open(image_file)
+        expand_for_bleed(img).save(args.output_dir/image_file.name)
 
 if __name__ == "__main__":
     LOGGER.setLevel(logging.DEBUG)

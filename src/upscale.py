@@ -47,6 +47,19 @@ LOGGER = logging.Logger(__name__)
 def upscale_img(img: Image, pil_upscale: bool = True):
     upscaled = img
     w, h = img.size
+    card_ratio = 744/1039
+    error = 0.02
+    img_ratio = w/h
+    if img_ratio > card_ratio+error:
+        h = math.ceil(w/card_ratio)
+        prev_filename = img.filename
+        img = img.resize((w, h))
+        img.filename = prev_filename
+    if img_ratio < card_ratio-error:
+        w = math.ceil(h*card_ratio)
+        prev_filename = img.filename
+        img = img.resize((w, h))
+        img.filename = prev_filename
     if w*h < 744*1039:
         LOGGER.info('Resizing card: ' + str(img.filename))
         if pil_upscale:
@@ -69,6 +82,7 @@ def upscale_img(img: Image, pil_upscale: bool = True):
     else:
        LOGGER.info('Skipping card: ' + str(img.filename))
        upscaled = img
+
     return upscaled
 
 

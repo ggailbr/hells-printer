@@ -29,7 +29,7 @@ def trim_edge(image: ImageFile, depth = 10, ratio = 0.5):
     modified_edge = [False,False,False,False]
 
     # First trim any alpha channel off the side
-    if image_array.shape[2] > 3:
+    if image_array.shape[2] > 3 and not str(image.filename).__contains__("Flashback_in_Flames"):
         # Test case: u_cirion02s_Art_Folder.png
         
         # Left side
